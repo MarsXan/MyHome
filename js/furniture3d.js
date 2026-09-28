@@ -207,7 +207,10 @@ window.HOME_FURNITURE = function ( T, env ) {
 	/* ---------------------------------------------------------- materials */
 
 	// Everything here is cut by the wall-height slider like the walls are.
-	const clip = { clippingPlanes: [ cutPlane ], clipShadows: true, side: T.DoubleSide, shadowSide: T.BackSide };
+	// Solid pieces are single-sided; the thin open shapes (lampshades, paper,
+	// curtains) are double-sided so they read from both sides.
+	const clip = { clippingPlanes: [ cutPlane ], clipShadows: true };
+	const twoSided = { side: T.DoubleSide, shadowSide: T.DoubleSide };
 	const std = ( o ) => new T.MeshStandardMaterial( Object.assign( {}, clip, o ) );
 	const phys = ( o ) => new T.MeshPhysicalMaterial( Object.assign( {}, clip, o ) );
 	const cloth = ( color, sheen = 0xfff6ea ) => phys( { color, roughness: 0.96, sheen: 1, sheenRoughness: 0.55, sheenColor: sheen } );
@@ -251,7 +254,7 @@ window.HOME_FURNITURE = function ( T, env ) {
 		charcoal: cloth( 0x3b3b39, 0x9a9a96 ),
 		linenWhite: cloth( 0xf2eee7 ),
 		sand: cloth( 0xcdbb9e ),
-		curtain: cloth( 0xf1ebe1 ),
+		curtain: phys( { color: 0xf1ebe1, roughness: 0.96, sheen: 1, sheenRoughness: 0.55, sheenColor: 0xfff6ea, ...twoSided } ),
 		rugOat: std( { map: tex.rugOat, roughness: 1 } ),
 		rugSand: std( { map: tex.rugSand, roughness: 1 } ),
 		rugMat: std( { map: tex.rugMat, roughness: 1 } ),
@@ -259,8 +262,8 @@ window.HOME_FURNITURE = function ( T, env ) {
 		artLines: std( { map: tex.artLines, roughness: 0.85 } ),
 		glassClip: glass.clone(),
 		// light sources: they glow when the evening light is on
-		paper: std( { map: tex.paper, roughness: 0.95, emissive: 0xffc58a, emissiveMap: tex.paper, emissiveIntensity: 0 } ),
-		shade: std( { color: 0xefe6d6, roughness: 0.95, emissive: 0xffc58a, emissiveIntensity: 0 } ),
+		paper: std( { map: tex.paper, roughness: 0.95, emissive: 0xffc58a, emissiveMap: tex.paper, emissiveIntensity: 0, ...twoSided } ),
+		shade: std( { color: 0xefe6d6, roughness: 0.95, emissive: 0xffc58a, emissiveIntensity: 0, ...twoSided } ),
 		ledWarm: std( { color: 0xfff3e0, roughness: 0.5, emissive: 0xffc27a, emissiveIntensity: 0 } ),
 		ledCool: std( { color: 0xfffaf2, roughness: 0.5, emissive: 0xffecd2, emissiveIntensity: 0 } ),
 	};
@@ -404,6 +407,7 @@ window.HOME_FURNITURE = function ( T, env ) {
 	function lamp( parent, x, y, z, kind, power ) {
 
 		const light = new T.PointLight( kind === 'cool' ? 0xffe3c8 : 0xffb46b, 0, 7, 2 );
+		light.visible = false; // switched on with the evening light
 		light.position.set( x, y, z );
 		parent.add( light );
 		lights.push( { light, power } );
@@ -450,7 +454,6 @@ window.HOME_FURNITURE = function ( T, env ) {
 		add( g, RB( W, h, 0.028, 0.004, mat.screen ), 0, h / 2, 0 );
 		// warm backlight that washes the wall in the evening
 		add( g, BX( W - 0.12, h - 0.12, 0.002, mat.ledWarm ), 0, h / 2, - 0.016 ).castShadow = false;
-		lamp( g, 0, h / 2, - 0.06, 'warm', 0.9 );
 		return g;
 
 	};
@@ -557,13 +560,13 @@ window.HOME_FURNITURE = function ( T, env ) {
 
 	};
 
-	B.tableLamp = () => {
+	B.tableLamp = ( W, D, o ) => {
 
 		const g = new T.Group();
 		add( g, LATHE( 'lampbase', [ [ 0, 0 ], [ 0.055, 0 ], [ 0.075, 0.05 ], [ 0.078, 0.11 ], [ 0.06, 0.17 ], [ 0.02, 0.2 ], [ 0.01, 0.2 ], [ 0.01, 0.26 ] ], mat.sandCeramic ), 0, 0, 0 );
 		add( g, CY( 0.1, 0.125, 0.17, mat.shade, 32, true ), 0, 0.3, 0 ).castShadow = false;
 		bulb( g, 0, 0.28, 0 );
-		lamp( g, 0, 0.28, 0, 'warm', 1.3 );
+		if ( ! o.dark ) lamp( g, 0, 0.28, 0, 'warm', o.power || 1.3 );
 		return g;
 
 	};
@@ -1080,13 +1083,11 @@ window.HOME_FURNITURE = function ( T, env ) {
 			add( g, CY( r, r, 0.012, mat.mirror, 48 ), 0, my + r, - D / 2 + 0.006 ).rotation.x = Math.PI / 2;
 			add( g, TOR( r, 0.007, mat.black ), 0, my + r, - D / 2 + 0.01 );
 			add( g, BX( 0.3, 0.02, 0.03, mat.ledCool ), 0, my + 2 * r + 0.06, - D / 2 + 0.02 ).castShadow = false;
-			lamp( g, 0, my + 2 * r, - D / 2 + 0.2, 'cool', 0.8 );
 
 		} else {
 
 			add( g, RB( W * 0.8, 0.75, 0.015, 0.06, mat.mirror ), 0, my + 0.375, - D / 2 + 0.008 );
 			add( g, BX( W * 0.6, 0.02, 0.03, mat.ledCool ), 0, my + 0.81, - D / 2 + 0.02 ).castShadow = false;
-			lamp( g, 0, my + 0.75, - D / 2 + 0.25, 'cool', 1.1 );
 
 		}
 
@@ -1176,13 +1177,56 @@ window.HOME_FURNITURE = function ( T, env ) {
 
 	} );
 
+	// Bake every part's transform into its geometry and merge parts that share
+	// a material: a few dozen draw calls instead of several hundred. Lights and
+	// labels are kept as they are.
+	group.updateMatrixWorld( true );
+	const buckets = new Map();
+	const keep = [];
+	group.traverse( ( o ) => {
+
+		if ( o.isMesh ) {
+
+			const key = o.material.uuid + ( o.castShadow ? '+' : '-' );
+			if ( ! buckets.has( key ) ) buckets.set( key, { material: o.material, cast: o.castShadow, geos: [] } );
+			buckets.get( key ).geos.push( o.geometry.clone().applyMatrix4( o.matrixWorld ) );
+
+		} else if ( o.isLight || o.isCSS2DObject ) keep.push( o );
+
+	} );
+
+	for ( const o of keep ) group.attach( o );
+	for ( const child of group.children.slice() ) if ( ! child.isLight && ! child.isCSS2DObject ) group.remove( child );
+
+	for ( const { material, cast, geos } of buckets.values() ) {
+
+		const indexed = geos.every( ( g ) => g.index );
+		const parts = indexed ? geos : geos.map( ( g ) => ( g.index ? g.toNonIndexed() : g ) );
+		const merged = parts.length === 1 ? parts[ 0 ] : T.mergeGeometries( parts, false );
+		if ( ! merged ) continue;
+		const mesh = new T.Mesh( merged, material );
+		mesh.castShadow = cast;
+		mesh.receiveShadow = true;
+		group.add( mesh );
+		for ( const g of geos ) if ( g !== merged ) g.dispose();
+
+	}
+
+	cache.forEach( ( g ) => g.dispose() );
+	cache.clear();
+
 	return {
 		group,
 		// 0 = daylight, 1 = evening: lamps glow and light the rooms
 		setEvening( t ) {
 
 			for ( const [ material, peak ] of GLOWS ) material.emissiveIntensity = peak * t;
-			for ( const { light, power } of lights ) light.intensity = power * 4 * t;
+			for ( const { light, power } of lights ) {
+
+				light.visible = t > 0.001;
+				light.intensity = power * 4 * t;
+
+			}
 
 		},
 	};

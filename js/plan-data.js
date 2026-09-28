@@ -155,8 +155,8 @@ window.HOME_PLAN = {
 		{ type: 'bed', at: [ 107, 420, 277, 630 ], face: 'n' },
 		{ type: 'nightstand', at: [ 52, 588, 97, 628 ], face: 'n', h: 50, book: - 1 },
 		{ type: 'nightstand', at: [ 287, 588, 332, 628 ], face: 'n', h: 50, book: 1 },
-		{ type: 'tableLamp', at: [ 55, 594, 79, 618 ], base: 50 },
-		{ type: 'tableLamp', at: [ 310, 594, 334, 618 ], base: 50 },
+		{ type: 'tableLamp', at: [ 55, 594, 79, 618 ], base: 50, power: 1.8 },
+		{ type: 'tableLamp', at: [ 310, 594, 334, 618 ], base: 50, dark: true }, // shares the other lamp's light
 		{ type: 'wardrobe', at: [ 25, 285, 265, 345 ], face: 's', h: 220 },
 		{ type: 'art', at: [ 132, 628, 252, 630 ], face: 'n', base: 125, h: 70, motif: 'lines' },
 		{ type: 'curtains', at: [ 0, 395, 6, 575 ], face: 'e', window: [ 430, 540 ] },

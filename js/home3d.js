@@ -69,9 +69,20 @@
 	}
 
 	const compact = Math.min( window.innerWidth, window.innerHeight ) < 700;
-	renderer.setPixelRatio( Math.min( window.devicePixelRatio || 1, compact ? 1.5 : 2 ) );
+	// Full resolution while the view is still, lower while it moves (see frame()).
+	const DPR_HIGH = Math.min( window.devicePixelRatio || 1, compact ? 1.5 : 2 );
+	const DPR_LOW = Math.max( 0.75, DPR_HIGH * 0.5 );
+	renderer.setPixelRatio( DPR_HIGH );
 	renderer.shadowMap.enabled = true;
 	renderer.shadowMap.type = T.PCFShadowMap;
+	// The sun never moves, so shadows are redrawn only when something in the
+	// flat does (walls cut, doors swung, furniture switched).
+	renderer.shadowMap.autoUpdate = false;
+	const refreshShadows = () => {
+
+		renderer.shadowMap.needsUpdate = true;
+
+	};
 	renderer.toneMapping = T.NeutralToneMapping;
 	renderer.toneMappingExposure = 1.0;
 	renderer.localClippingEnabled = true; // furniture is cut by the wall-height slider
@@ -342,7 +353,7 @@
 		slab: new T.MeshStandardMaterial( { color: 0x8f8c86, roughness: 0.96 } ),
 		sill: new T.MeshStandardMaterial( { color: 0xd8d2c7, roughness: 0.55 } ),
 		frame: new T.MeshStandardMaterial( { color: 0x2b3139, roughness: 0.4, metalness: 0.4 } ),
-		glass: new T.MeshPhysicalMaterial( { color: 0xe3f0f2, roughness: 0.02, metalness: 0, transmission: 1, thickness: 0.01, ior: 1.5, envMapIntensity: 1.5 } ),
+		glass: new T.MeshStandardMaterial( { color: 0xcfe4ea, roughness: 0.04, metalness: 0.1, transparent: true, opacity: 0.22, depthWrite: false, envMapIntensity: 1.6 } ),
 		door: new T.MeshStandardMaterial( { map: tex.door, roughness: 0.52 } ),
 		mainDoor: new T.MeshStandardMaterial( { map: tex.mainDoor, roughness: 0.45 } ),
 	};
@@ -368,8 +379,10 @@
 	// `section` is the material shown on top where the cut passes through it.
 	function block( x0, x1, z0, z1, y0, y1, material, section, opts = {} ) {
 
-		const whole = faces( material, material );
-		const cut = faces( material, section || material );
+		// one material (one draw call) until the slider cuts through the piece;
+		// only then does it need a different material on top
+		const whole = material;
+		const cut = section ? faces( material, section ) : material;
 		const mesh = new T.Mesh( UNIT, whole );
 		mesh.position.set( ( x0 + x1 ) / 2, ( y0 + y1 ) / 2, ( z0 + z1 ) / 2 );
 		mesh.scale.set( x1 - x0, y1 - y0, z1 - z0 );
@@ -404,6 +417,7 @@
 
 		lastCut = h;
 		cutPlane.constant = h + 0.001;
+		refreshShadows();
 		for ( const wall of walls ) buildWall( wall, h );
 		buildParapet( h );
 		for ( const c of cuttable ) {
@@ -705,6 +719,7 @@
 
 		doorsOpen = t;
 		for ( const l of leaves ) l.pivot.rotation.y = l.closed + l.delta * t;
+		refreshShadows();
 
 	}
 
@@ -1119,20 +1134,60 @@
 
 	controls.addEventListener( 'change', wake );
 
+	// While the view moves it renders at a lower resolution without ambient
+	// occlusion; 0.2 s after it settles, one full-quality frame is drawn.
+	let sharp = true;
+	let lastMove = 0;
+	function setSharp( on ) {
+
+		if ( sharp === on ) return;
+		sharp = on;
+		renderer.setPixelRatio( on ? DPR_HIGH : DPR_LOW );
+		composer.setPixelRatio( on ? DPR_HIGH : DPR_LOW );
+
+	}
+
+	function nudge() {
+
+		lastMove = performance.now();
+		setSharp( false );
+		wake();
+
+	}
+
+	const labelsShown = () => ! stage.classList.contains( 'no-rooms' ) || stage.classList.contains( 'show-tags' );
+
 	function frame( now ) {
 
 		requestAnimationFrame( frame );
 		if ( ! onScreen ) return;
 		const moving = stepRise( now ) | stepTween( now ) | stepDoors( now ) | stepEvening( now );
 		const changed = controls.update();
-		if ( moving || changed || dirty ) {
+		if ( moving || changed ) {
+
+			lastMove = now;
+			setSharp( false );
+			dirty = true;
+
+		} else if ( ! sharp && now - lastMove > 200 ) {
+
+			setSharp( true );
+			dirty = true;
+
+		}
+
+		if ( dirty ) {
 
 			dirty = false;
-			// the AO pass can't see clipped furniture, so it rests while walls are cut
-			ao.enabled = lastCut >= HT.wall - 1e-3;
+			// the AO pass can't see clipped furniture, so it also rests while walls are cut
+			ao.enabled = sharp && lastCut >= HT.wall - 1e-3;
 			composer.render();
-			updateOcclusion();
-			labelRenderer.render( scene, camera );
+			if ( labelsShown() ) {
+
+				if ( sharp ) updateOcclusion();
+				labelRenderer.render( scene, camera );
+
+			}
 
 		}
 
@@ -1206,7 +1261,7 @@
 			cutHeight = parseFloat( cutInput.value );
 			applyCut( cutHeight );
 			showCut( cutHeight );
-			wake();
+			nudge(); // dragging the slider renders like moving the camera
 
 		} );
 
@@ -1233,6 +1288,7 @@
 	toggle( 't-furn', ( on ) => {
 
 		if ( furnish ) furnish.group.visible = on;
+		refreshShadows();
 
 	} );
 	toggle( 't-evening', ( on ) => animateEvening( on ? 1 : 0 ) );
