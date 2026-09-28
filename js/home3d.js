@@ -1167,9 +1167,14 @@
 	toggle( 't-labels', ( on ) => stage.classList.toggle( 'no-rooms', ! on ) );
 	toggle( 't-tags', ( on ) => stage.classList.toggle( 'show-tags', on ) );
 
+	// the buttons' aria-pressed in index.html set the starting state
+	const pressed = ( id ) => document.getElementById( id )?.getAttribute( 'aria-pressed' ) === 'true';
+	stage.classList.toggle( 'no-rooms', ! pressed( 't-labels' ) );
+	stage.classList.toggle( 'show-tags', pressed( 't-tags' ) );
+
 	/* ------------------------------------------------------------ start */
 
-	setDoors( 1 );
+	setDoors( pressed( 't-doors' ) ? 1 : 0 );
 	applyCut( cutHeight );
 	showCut( cutHeight );
 	resize();
