@@ -15,7 +15,7 @@
     <div class="tb-head">
       <div>
         <h1>Floor&nbsp;4 Apartment Plan</h1>
-        <p class="sub">Redrawn from your hand sketch as a 3D model and a measured plan. Every wall, door and window comes from the sketch — nothing added, nothing removed.</p>
+        <p class="sub">Redrawn from your hand sketch as a 3D model and a measured plan, then furnished as a warm, minimal Japandi home for two. The walls, doors and windows are exactly as you drew them; the furniture can be switched off.</p>
       </div>
       <span class="stamp">Estimated dimensions</span>
     </div>
@@ -56,17 +56,239 @@
       <div class="toggles" role="group" aria-label="Show in the model">
         <button type="button" class="tog" id="t-doors" aria-pressed="false">Doors open</button>
         <button type="button" class="tog" id="t-labels" aria-pressed="false">Room names</button>
-        <button type="button" class="tog" id="t-tags" aria-pressed="false">Door &amp; window tags</button>
+        <button type="button" class="tog" id="t-tags" aria-pressed="false">Tags</button>
+        <button type="button" class="tog" id="t-furn" aria-pressed="true">Furniture</button>
+        <button type="button" class="tog" id="t-evening" aria-pressed="false">Evening light</button>
       </div>
     </footer>
   </section>
 
+  <a class="callout" href="design.html">
+    <span class="callout-k">Interior design brief</span>
+    <span class="callout-t">Why every piece sits where it does: plan review, palette, materials, room-by-room layout with clearances, lighting plan, balcony planting, a shopping list and image prompts.</span>
+    <span class="callout-go">Open the brief &rarr;</span>
+  </a>
+
   <!-- ================= THE PLAN ================= -->
   <section class="sheet">
     <div class="sheet-inner">
+      <div class="sheet-head">
+        <h2>Furnished plan</h2>
+        <p>The same layout as the 3D model. Dashed blue: the two sofa beds opened.</p>
+      </div>
       <div class="plan-scroll">
         <svg class="plan" viewBox="-360 -170 1760 1000" role="img"
              aria-label="Floor plan of a 72 square metre apartment: small room and master room along the left wall, an open living room and kitchen across the top and right, a shower and bathroom block along the bottom centre, an entrance hall bottom right, and a small balcony projecting from the left wall.">
+
+          <!-- ===== floor fills ===== -->
+          <path class="r-fill" d="M 0 0 H 1225 V 385 H 1015 V 630 H 0 Z"/>
+          <rect class="r-alt" x="975" y="0" width="250" height="385"/>
+          <rect class="r-wet" x="395" y="430" width="470" height="200"/>
+          <rect class="r-out" x="-115" y="150" width="90" height="120"/>
+
+          <!-- ===== furniture, drawn from js/plan-data.js by js/furnish2d.js ===== -->
+          <g id="furniture-2d" class="furn" aria-hidden="true"></g>
+
+          <!-- ===== exterior wall (poché) ===== -->
+          <path class="w-fill" fill-rule="evenodd"
+                d="M -25 -25 H 1250 V 410 H 1040 V 655 H -25 Z
+                   M 0 0 H 1225 V 385 H 1015 V 630 H 0 Z"/>
+
+          <!-- ===== balcony parapet ===== -->
+          <path class="w-fill" fill-rule="evenodd"
+                d="M -125 140 H -25 V 280 H -125 Z
+                   M -115 150 H -25 V 270 H -115 Z"/>
+
+          <!-- ===== interior partitions ===== -->
+          <rect class="w-fill" x="385" y="0"   width="10"  height="630"/>
+          <rect class="w-fill" x="0"   y="275" width="385" height="10"/>
+          <rect class="w-fill" x="395" y="420" width="470" height="10"/>
+          <rect class="w-fill" x="655" y="430" width="10"  height="200"/>
+          <rect class="w-fill" x="855" y="430" width="10"  height="200"/>
+
+          <!-- ===== door openings: clear the wall, then jambs, leaf, swing ===== -->
+
+          <!-- D6  balcony door — from small room, swings into balcony -->
+          <rect class="r-fill" x="-25" y="175" width="25" height="80"/>
+          <path class="jamb" d="M -25 175 H 0 M -25 255 H 0"/>
+          <path class="leaf" d="M -25 175 H -105"/>
+          <path class="swing" d="M -105 175 A 80 80 0 0 0 -25 255"/>
+
+          <!-- D3  small room door — from living, swings into small room -->
+          <rect class="r-fill" x="385" y="180" width="10" height="85"/>
+          <path class="jamb" d="M 385 180 H 395 M 385 265 H 395"/>
+          <path class="leaf" d="M 385 180 H 300"/>
+          <path class="swing" d="M 300 180 A 85 85 0 0 0 385 265"/>
+
+          <!-- D2  master room door — from living, swings into master -->
+          <rect class="r-fill" x="385" y="295" width="10" height="85"/>
+          <path class="jamb" d="M 385 295 H 395 M 385 380 H 395"/>
+          <path class="leaf" d="M 385 295 H 300"/>
+          <path class="swing" d="M 300 295 A 85 85 0 0 0 385 380"/>
+
+          <!-- D4  shower door — from master room, swings into shower -->
+          <rect class="r-fill" x="385" y="540" width="10" height="75"/>
+          <path class="jamb" d="M 385 540 H 395 M 385 615 H 395"/>
+          <path class="leaf" d="M 395 540 H 470"/>
+          <path class="swing" d="M 470 540 A 75 75 0 0 1 395 615"/>
+
+          <!-- D5  bathroom door — from entrance hall, swings into bathroom -->
+          <rect class="r-fill" x="855" y="540" width="10" height="75"/>
+          <path class="jamb" d="M 855 540 H 865 M 855 615 H 865"/>
+          <path class="leaf" d="M 855 540 H 780"/>
+          <path class="swing" d="M 780 540 A 75 75 0 0 0 855 615"/>
+
+          <!-- D1  main entrance — swings into entrance hall -->
+          <rect class="r-fill" x="1015" y="475" width="25" height="95"/>
+          <path class="jamb" d="M 1015 475 H 1040 M 1015 570 H 1040"/>
+          <path class="leaf" d="M 1015 475 H 920"/>
+          <path class="swing" d="M 920 475 A 95 95 0 0 0 1015 570"/>
+
+          <!-- ===== windows ===== -->
+          <!-- W1 small room -->
+          <rect class="win-frame" x="-25" y="35" width="25" height="100"/>
+          <path class="win-glass" d="M -12.5 35 V 135"/>
+          <!-- W2 master room -->
+          <rect class="win-frame" x="-25" y="430" width="25" height="110"/>
+          <path class="win-glass" d="M -12.5 430 V 540"/>
+          <!-- W3 kitchen upper -->
+          <rect class="win-frame" x="1225" y="50" width="25" height="100"/>
+          <path class="win-glass" d="M 1237.5 50 V 150"/>
+          <!-- W4 kitchen lower -->
+          <rect class="win-frame" x="1225" y="200" width="25" height="100"/>
+          <path class="win-glass" d="M 1237.5 200 V 300"/>
+
+          <!-- ===== open-plan zone boundaries (no wall in the sketch) ===== -->
+          <path class="zone" d="M 975 0 V 385"/>
+          <path class="zone" d="M 865 425 H 1015"/>
+
+          <!-- ===== room labels ===== -->
+          <text class="rname" style="font-size:36px" x="235" y="112">SMALL ROOM</text>
+          <text class="rdim"  x="235" y="142">3.85 × 2.75 m</text>
+          <text class="rarea" x="235" y="168">10.6 m²</text>
+
+          <text class="rname" style="font-size:36px" x="180" y="440">MASTER ROOM</text>
+          <text class="rdim"  x="180" y="477">3.85 × 3.45 m</text>
+          <text class="rarea" x="180" y="509">13.3 m²</text>
+
+          <text class="rname" style="font-size:40px" x="690" y="376">LIVING ROOM</text>
+          <text class="rarea" style="font-size:26px" x="690" y="408">24.7 m²</text>
+
+          <text class="rname" style="font-size:36px" x="1100" y="165">KITCHEN</text>
+          <text class="rdim"  x="1100" y="200">2.50 × 3.85 m</text>
+          <text class="rarea" x="1100" y="230">9.6 m²</text>
+          <text class="rnote" x="1100" y="260">open to living</text>
+
+          <text class="rname" style="font-size:30px" x="492" y="508">SHOWER</text>
+          <text class="rdim"  style="font-size:20px" x="492" y="536">2.60 × 2.00 m</text>
+          <text class="rarea" style="font-size:20px" x="492" y="560">5.2 m²</text>
+
+          <text class="rname" style="font-size:26px" x="758" y="472">BATHROOM</text>
+          <text class="rdim"  style="font-size:18px" x="758" y="498">1.90 × 2.00 m</text>
+          <text class="rarea" style="font-size:18px" x="758" y="522">3.8 m²</text>
+
+          <text class="rname" style="font-size:24px" x="938" y="596">ENTRANCE</text>
+          <text class="rarea" style="font-size:18px" x="938" y="620">3.0 m²</text>
+
+          <text class="rname" style="font-size:18px;letter-spacing:.04em" x="-88" y="210" transform="rotate(-90 -88 210)">BALCONY</text>
+          <text class="rarea" style="font-size:13px" x="-53" y="210" transform="rotate(-90 -53 210)">1.1 m²</text>
+
+          <!-- ===== opening tags ===== -->
+          <text class="tag" x="-58" y="93">W1</text>
+          <text class="tag" x="-58" y="492">W2</text>
+          <text class="tag" x="1288" y="108">W3</text>
+          <text class="tag" x="1288" y="258">W4</text>
+          <text class="tag" x="-70" y="322">D6</text>
+          <text class="tag" x="428" y="230">D3</text>
+          <text class="tag" x="428" y="345">D2</text>
+          <text class="tag" x="520" y="612">D4</text>
+          <text class="tag" x="745" y="608">D5</text>
+          <text class="tag" x="1082" y="528">D1</text>
+
+          <!-- ===== dimensions: top ===== -->
+          <path class="ext" d="M 0 -30 V -90 M 385 -30 V -90 M 395 -30 V -90 M 975 -30 V -90 M 1225 -30 V -90"/>
+          <path class="dim" d="M 0 -80 H 385 M 395 -80 H 975 M 975 -80 H 1225"/>
+          <path class="tick" d="M -8 -72 L 8 -88 M 377 -72 L 393 -88 M 387 -72 L 403 -88 M 967 -72 L 983 -88 M 1217 -72 L 1233 -88"/>
+          <text class="dimtxt" x="192"  y="-92">3.85</text>
+          <text class="dimtxt" x="685"  y="-92">5.80</text>
+          <text class="dimtxt" x="1100" y="-92">2.50</text>
+
+          <path class="ext" d="M 0 -96 V -150 M 1225 -96 V -150"/>
+          <path class="dim" d="M 0 -140 H 1225"/>
+          <path class="tick" d="M -8 -132 L 8 -148 M 1217 -132 L 1233 -148"/>
+          <text class="dimtxt" style="font-size:26px" x="612" y="-152">12.25 m</text>
+
+          <!-- ===== dimensions: left ===== -->
+          <path class="ext" d="M -30 0 H -210 M -135 275 H -210 M -30 285 H -210 M -30 630 H -210"/>
+          <path class="dim" d="M -200 0 V 275 M -200 285 V 630"/>
+          <path class="tick" d="M -208 8 L -192 -8 M -208 283 L -192 267 M -208 293 L -192 277 M -208 638 L -192 622"/>
+          <text class="dimtxt" x="-212" y="137" transform="rotate(-90 -212 137)">2.75</text>
+          <text class="dimtxt" x="-212" y="457" transform="rotate(-90 -212 457)">3.45</text>
+
+          <path class="ext" d="M -216 0 H -275 M -216 630 H -275"/>
+          <path class="dim" d="M -265 0 V 630"/>
+          <path class="tick" d="M -273 8 L -257 -8 M -273 638 L -257 622"/>
+          <text class="dimtxt" style="font-size:26px" x="-277" y="315" transform="rotate(-90 -277 315)">6.30 m</text>
+
+          <!-- ===== dimensions: right (kitchen depth) ===== -->
+          <path class="ext" d="M 1255 0 H 1330 M 1255 385 H 1330"/>
+          <path class="dim" d="M 1320 0 V 385"/>
+          <path class="tick" d="M 1312 8 L 1328 -8 M 1312 393 L 1328 377"/>
+          <text class="dimtxt" x="1332" y="192" transform="rotate(-90 1332 192)">3.85</text>
+
+          <!-- ===== dimensions: bottom ===== -->
+          <path class="ext" d="M 0 660 V 730 M 385 660 V 730 M 395 660 V 730 M 655 660 V 730 M 665 660 V 730 M 855 660 V 730 M 865 660 V 730 M 1015 660 V 730"/>
+          <path class="dim" d="M 0 720 H 385 M 395 720 H 655 M 665 720 H 855 M 865 720 H 1015"/>
+          <path class="tick" d="M -8 728 L 8 712 M 377 728 L 393 712 M 387 728 L 403 712 M 647 728 L 663 712 M 657 728 L 673 712 M 847 728 L 863 712 M 857 728 L 873 712 M 1007 728 L 1023 712"/>
+          <text class="dimtxt" x="192" y="750">3.85</text>
+          <text class="dimtxt" x="525" y="750">2.60</text>
+          <text class="dimtxt" x="760" y="750">1.90</text>
+          <text class="dimtxt" x="940" y="750">1.50</text>
+
+          <!-- ===== recess note ===== -->
+          <path class="ext" d="M 1040 665 V 700 M 1250 665 V 700"/>
+          <path class="dim" d="M 1040 690 H 1250"/>
+          <path class="tick" d="M 1032 698 L 1048 682 M 1242 698 L 1258 682"/>
+          <text class="dimtxt" style="font-size:21px" x="1145" y="722">2.10 recess</text>
+
+          <!-- ===== scale bar ===== -->
+          <g>
+            <rect class="w-fill" x="0"   y="790" width="100" height="13"/>
+            <rect class="r-fill" x="100" y="790" width="100" height="13"/>
+            <rect class="w-fill" x="200" y="790" width="100" height="13"/>
+            <rect class="r-fill" x="300" y="790" width="100" height="13"/>
+            <rect x="0" y="790" width="400" height="13" fill="none" stroke="currentColor" stroke-width="1.8" style="color:var(--wall)"/>
+            <text class="scaletxt" x="0"   y="782">0</text>
+            <text class="scaletxt" x="100" y="782">1</text>
+            <text class="scaletxt" x="200" y="782">2</text>
+            <text class="scaletxt" x="300" y="782">3</text>
+            <text class="scaletxt" x="405" y="782">4 m</text>
+          </g>
+        </svg>
+      </div>
+
+      <div class="sheet-foot">
+        <div class="legend">
+          <span class="lg"><svg width="26" height="12"><rect x="0" y="3" width="26" height="6" fill="var(--wall)"/></svg>Wall</span>
+          <span class="lg"><svg width="26" height="12"><rect x="0" y="3" width="26" height="6" fill="var(--sheet)" stroke="var(--wall)" stroke-width="1.4"/><line x1="0" y1="6" x2="26" y2="6" stroke="var(--accent)" stroke-width="2.6"/></svg>Window</span>
+          <span class="lg"><svg width="26" height="18"><path d="M 24 2 H 4" stroke="var(--wall)" stroke-width="2.6"/><path d="M 4 2 A 20 20 0 0 1 24 16" fill="none" stroke="var(--wall)" stroke-width="1.4"/></svg>Door &amp; swing</span>
+          <span class="lg"><svg width="26" height="12"><line x1="0" y1="6" x2="26" y2="6" stroke="var(--accent-2)" stroke-width="2.4" stroke-dasharray="6 4"/></svg>Open-plan zone (no wall)</span>
+          <span class="lg"><svg width="26" height="12"><rect x="0" y="1" width="26" height="10" fill="var(--room-out)" stroke="var(--rule)" stroke-width="1"/></svg>Balcony</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= EMPTY PLAN ================= -->
+  <section class="sheet">
+    <div class="sheet-inner">
+      <div class="sheet-head">
+        <h2>Empty plan</h2>
+        <p>As drawn: walls, doors and windows only.</p>
+      </div>
+      <div class="plan-scroll">
+        <svg class="plan" viewBox="-360 -170 1760 1000" role="img"
+             aria-label="Empty floor plan, without furniture, of a 72 square metre apartment: small room and master room along the left wall, an open living room and kitchen across the top and right, a shower and bathroom block along the bottom centre, an entrance hall bottom right, and a small balcony projecting from the left wall.">
 
           <!-- ===== floor fills ===== -->
           <path class="r-fill" d="M 0 0 H 1225 V 385 H 1015 V 630 H 0 Z"/>
@@ -339,7 +561,7 @@
           <li><strong>The master room is now the larger of the two bedrooms,</strong> as you asked. Your sketch had the small room slightly bigger.</li>
           <li><strong>Wall thickness assumed:</strong> 25 cm exterior, 10 cm partitions. No orientation was marked, so there is no north arrow.</li>
           <li><strong>Heights are assumed for the 3D model:</strong> ceiling 2.80 m, doors 2.10 m, windows from 0.90 m to 2.20 m above the floor, balcony parapet 1.00 m. The floor finishes (oak, stone, tile) are there only to tell the zones apart.</li>
-          <li><strong>Nothing was added:</strong> no furniture, no fixtures, no extra doors or windows, no closets — in the plan or the model.</li>
+          <li><strong>The architecture is untouched:</strong> no extra walls, doors or windows. The furniture, lamps and finishes are a proposed interior; switch them off in the 3D model, or see the empty plan, to look at the flat exactly as drawn.</li>
         </ul>
       </div>
     </section>
@@ -363,6 +585,8 @@
 
 <script src="vendor/three.bundle.min.js"></script>
 <script src="js/plan-data.js"></script>
+<script src="js/furniture3d.js"></script>
+<script src="js/furnish2d.js"></script>
 <script src="js/home3d.js"></script>
 </body>
 </html>

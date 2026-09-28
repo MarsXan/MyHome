@@ -15,6 +15,7 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 
 window.THREE = Object.assign( {}, CORE, {
 	OrbitControls,
@@ -25,4 +26,5 @@ window.THREE = Object.assign( {}, CORE, {
 	OutputPass,
 	CSS2DRenderer,
 	CSS2DObject,
+	RoundedBoxGeometry,
 } );

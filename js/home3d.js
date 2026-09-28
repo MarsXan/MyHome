@@ -74,6 +74,7 @@
 	renderer.shadowMap.type = T.PCFShadowMap;
 	renderer.toneMapping = T.NeutralToneMapping;
 	renderer.toneMappingExposure = 1.0;
+	renderer.localClippingEnabled = true; // furniture is cut by the wall-height slider
 	renderer.domElement.className = 'stage-canvas';
 	stage.prepend( renderer.domElement );
 	renderer.domElement.addEventListener( 'webglcontextlost', ( e ) => {
@@ -110,7 +111,8 @@
 	sun.shadow.radius = 2;
 	scene.add( sun, sun.target );
 
-	scene.add( new T.HemisphereLight( 0xeaf1f8, 0xcfc3b2, 0.5 ) );
+	const hemi = new T.HemisphereLight( 0xeaf1f8, 0xcfc3b2, 0.5 );
+	scene.add( hemi );
 
 	/* --------------------------------------------- procedural textures */
 
@@ -394,8 +396,14 @@
 
 	}
 
+	// Furniture is cut by this plane instead of being rebuilt: y above it is hidden.
+	const cutPlane = new T.Plane( new T.Vector3( 0, - 1, 0 ), HT.wall + 0.001 );
+	let lastCut = HT.wall;
+
 	function applyCut( h ) {
 
+		lastCut = h;
+		cutPlane.constant = h + 0.001;
 		for ( const wall of walls ) buildWall( wall, h );
 		buildParapet( h );
 		for ( const c of cuttable ) {
@@ -701,6 +709,12 @@
 	}
 
 	applyCut( HT.wall ); // build the walls at full height before measuring the model
+
+	// interior design: furniture, lamps and textiles (js/furniture3d.js)
+	const furnish = window.HOME_FURNITURE
+		? window.HOME_FURNITURE( T, { X, Z, m, FLOOR, BALCONY_DROP, canvasTexture, rng, hsl, cutPlane, glass: mat.glass, wallHeight: HT.wall } )
+		: null;
+	if ( furnish ) model.add( furnish.group );
 
 	/* ----------------------------------------------- ground and shadow */
 
@@ -1029,10 +1043,56 @@
 
 	}
 
+	/* ------------------------------------------------------ evening */
+
+	let evening = 0;
+	let eveningAnim = null;
+	const sunDay = sun.color.clone();
+	const sunNight = new T.Color( 0x9db2d6 );
+	const NIGHT_BG = new T.Color( '#161c25' );
+
+	function setEvening( t ) {
+
+		evening = t;
+		const L = T.MathUtils.lerp;
+		sun.intensity = L( 2.9, 0.16, t );
+		sun.color.copy( sunDay ).lerp( sunNight, t );
+		hemi.intensity = L( 0.5, 0.05, t );
+		scene.environmentIntensity = L( 0.42, 0.05, t );
+		renderer.toneMappingExposure = L( 1.0, 1.25, t );
+		if ( furnish ) furnish.setEvening( t );
+		syncBackground();
+
+	}
+
+	function animateEvening( to ) {
+
+		if ( reduceMotion ) {
+
+			setEvening( to );
+			return;
+
+		}
+
+		eveningAnim = { t0: performance.now(), from: evening, to };
+		wake();
+
+	}
+
+	function stepEvening( now ) {
+
+		if ( ! eveningAnim ) return false;
+		const k = Math.min( 1, ( now - eveningAnim.t0 ) / 1400 );
+		setEvening( T.MathUtils.lerp( eveningAnim.from, eveningAnim.to, ease( k ) ) );
+		if ( k >= 1 ) eveningAnim = null;
+		return true;
+
+	}
+
 	function syncBackground() {
 
 		const hex = getComputedStyle( stage ).getPropertyValue( '--viewer-bg' ).trim() || '#e6eaee';
-		const want = new T.Color( hex );
+		const want = new T.Color( hex ).lerp( NIGHT_BG, evening );
 		const goal = [ want.r, want.g, want.b ];
 		let c = goal.slice();
 		for ( let i = 0; i < 60; i ++ ) {
@@ -1063,11 +1123,13 @@
 
 		requestAnimationFrame( frame );
 		if ( ! onScreen ) return;
-		const moving = stepRise( now ) | stepTween( now ) | stepDoors( now );
+		const moving = stepRise( now ) | stepTween( now ) | stepDoors( now ) | stepEvening( now );
 		const changed = controls.update();
 		if ( moving || changed || dirty ) {
 
 			dirty = false;
+			// the AO pass can't see clipped furniture, so it rests while walls are cut
+			ao.enabled = lastCut >= HT.wall - 1e-3;
 			composer.render();
 			updateOcclusion();
 			labelRenderer.render( scene, camera );
@@ -1116,7 +1178,9 @@
 		ndc.set( ( ( e.clientX - r.left ) / r.width ) * 2 - 1, - ( ( e.clientY - r.top ) / r.height ) * 2 + 1 );
 		ray.setFromCamera( ndc, camera );
 		ray.far = Infinity;
-		const hit = ray.intersectObjects( floors.concat( blockers.filter( ( b ) => b.visible ) ), false )[ 0 ];
+		const targets = floors.concat( blockers.filter( ( b ) => b.visible ) );
+		if ( furnish && furnish.group.visible ) targets.push( furnish.group );
+		const hit = ray.intersectObjects( targets, true )[ 0 ];
 		if ( ! hit ) return;
 		const offset = camera.position.clone().sub( controls.target ).multiplyScalar( 0.6 );
 		if ( offset.length() < controls.minDistance * 1.2 ) offset.setLength( controls.minDistance * 1.2 );
@@ -1166,6 +1230,12 @@
 	toggle( 't-doors', ( on ) => animateDoors( on ? 1 : 0 ) );
 	toggle( 't-labels', ( on ) => stage.classList.toggle( 'no-rooms', ! on ) );
 	toggle( 't-tags', ( on ) => stage.classList.toggle( 'show-tags', on ) );
+	toggle( 't-furn', ( on ) => {
+
+		if ( furnish ) furnish.group.visible = on;
+
+	} );
+	toggle( 't-evening', ( on ) => animateEvening( on ? 1 : 0 ) );
 
 	// the buttons' aria-pressed in index.html set the starting state
 	const pressed = ( id ) => document.getElementById( id )?.getAttribute( 'aria-pressed' ) === 'true';
@@ -1175,6 +1245,8 @@
 	/* ------------------------------------------------------------ start */
 
 	setDoors( pressed( 't-doors' ) ? 1 : 0 );
+	if ( furnish ) furnish.group.visible = pressed( 't-furn' ) || ! document.getElementById( 't-furn' );
+	if ( pressed( 't-evening' ) ) setEvening( 1 );
 	applyCut( cutHeight );
 	showCut( cutHeight );
 	resize();
